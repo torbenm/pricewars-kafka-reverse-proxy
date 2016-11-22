@@ -2,11 +2,13 @@ from kafka import KafkaConsumer
 from kafka import TopicPartition
 from flask import Flask, render_template
 import json
+from flask_cors import CORS
 
 kafka_endpoint = 'vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de'
 consumer = KafkaConsumer(consumer_timeout_ms = 1000, bootstrap_servers = kafka_endpoint + ':9092')
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route("/")
 def hello():
