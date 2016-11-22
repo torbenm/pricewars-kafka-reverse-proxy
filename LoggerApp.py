@@ -4,9 +4,6 @@ from flask import Flask, render_template
 import json
 from flask_cors import CORS
 
-kafka_endpoint = 'vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de'
-consumer = KafkaConsumer(consumer_timeout_ms = 1000, bootstrap_servers = kafka_endpoint + ':9092')
-
 app = Flask(__name__)
 CORS(app)
 
@@ -16,6 +13,9 @@ def hello():
 
 @app.route("/log/sales")
 def getAll():
+    kafka_endpoint = 'vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de'
+    consumer = KafkaConsumer(consumer_timeout_ms = 3000, bootstrap_servers = kafka_endpoint + ':9092')
+
     consumer.assign([TopicPartition('sales', 0)])
     consumer.seek_to_beginning()
 
