@@ -32,11 +32,31 @@ def getAll():
     return(json.dumps(result))
 
 @app.route("/log/buyOffer")
-def getAll2():
+def buyOffer():
     kafka_endpoint = 'vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de'
     consumer = KafkaConsumer(consumer_timeout_ms = 3000, bootstrap_servers = kafka_endpoint + ':9092')
 
     consumer.assign([TopicPartition('buyOffer', 0)])
+    consumer.seek_to_beginning()
+
+    result = []
+
+    for msg in consumer:
+        try:
+            msg2 = json.loads(msg.value.decode('utf-8'))
+            result.append({"topic": msg.topic,"timestamp": msg.timestamp,"value": msg2})
+        except:
+            pass
+
+    consumer.close()
+    return(json.dumps(result))
+
+@app.route("/log/salesPerMinutes")
+def salesPerMinutes():
+    kafka_endpoint = 'vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de'
+    consumer = KafkaConsumer(consumer_timeout_ms = 3000, bootstrap_servers = kafka_endpoint + ':9092')
+
+    consumer.assign([TopicPartition('salesPerMinutes', 0)])
     consumer.seek_to_beginning()
 
     result = []
