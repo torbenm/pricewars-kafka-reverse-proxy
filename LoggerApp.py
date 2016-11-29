@@ -32,7 +32,7 @@ def getAll():
     return(json.dumps(result))
 
 @app.route("/log/buyOffer")
-def getAll():
+def getAll2():
     kafka_endpoint = 'vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de'
     consumer = KafkaConsumer(consumer_timeout_ms = 3000, bootstrap_servers = kafka_endpoint + ':9092')
 
