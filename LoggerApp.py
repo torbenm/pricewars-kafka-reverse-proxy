@@ -10,7 +10,6 @@ from flask_socketio import send, emit
 import json
 import time
 
-
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, logger=True, engineio_logger=True)
@@ -39,7 +38,7 @@ class KafkaHandler(object):
                     "timestamp": msg.timestamp,
                     "value": msg_json
                 })
-                socketio.emit('buyOffer', json.dumps({"topic": msg.topic,"timestamp": msg.timestamp,"value": msg.value.decode('utf-8')}), namespace='/test')
+                socketio.emit('buyOffer', json.dumps({"topic": msg.topic,"timestamp": msg.timestamp,"value": msg.value.decode('utf-8')}), namespace='/')
             except Exception as e:
                 print('emit error', e)
                 break
@@ -68,15 +67,15 @@ def getAll():
     consumer.close()
     return(json.dumps(result))
 
-@socketio.on('connect', namespace='/test')
+@socketio.on('connect', namespace='/')
 def test_connect():
     print('test_connect')
     emit('test', {})
 
-@socketio.on('buyOffer', namespace='/test')
+@socketio.on('buyOffer', namespace='/')
 def buy_offer_listener():
     print('buy_offer_listener')
-    emit('buyOffer', 'buy_offer_listener')
+    emit('buyOffer', {})
 
 
 if __name__ == "__main__":
