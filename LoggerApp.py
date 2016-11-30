@@ -32,7 +32,7 @@ class KafkaHandler(object):
             print('message', count)
             count += 1
             try:
-                msg_json = json.dumps(msg.value.decode('utf-8'))
+                msg_json = msg.value.decode('utf-8')
                 output_json = json.dumps({
                     "topic": msg.topic,
                     "timestamp": msg.timestamp,
@@ -50,7 +50,7 @@ kafka = KafkaHandler()
 @app.route("/log/sales")
 def getAll():
     print('received request')
-    consumer = KafkaConsumer(consumer_timeout_ms = 3000, bootstrap_servers = kafka_endpoint + ':9092')
+    consumer = KafkaConsumer(consumer_timeout_ms = 1000, bootstrap_servers = kafka_endpoint + ':9092')
 
     consumer.assign([TopicPartition('buyOffer', 0)])
     consumer.seek_to_beginning()
@@ -59,7 +59,7 @@ def getAll():
 
     for msg in consumer:
         try:
-            msg2 = json.loads(msg.value.decode('utf-8'))
+            msg2 = msg.value.decode('utf-8')
             result.append({"topic": msg.topic,"timestamp": msg.timestamp,"value": msg2})
         except:
             pass
