@@ -19,7 +19,11 @@ kafka_endpoint = 'vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de'
 class KafkaHandler(object):
     def __init__(self):
         self.consumer = KafkaConsumer(bootstrap_servers = kafka_endpoint + ':9092')
-        self.consumer.assign([TopicPartition('buyOffer', 0)])
+        self.dumps = {}
+
+        topic = 'buyOffer'
+        self.dumps[topic] = []
+        self.consumer.assign([TopicPartition(topic, 0)])
         self.consumer.seek_to_beginning()
 
         self.thread = threading.Thread(target=self.run, args=())
@@ -32,13 +36,14 @@ class KafkaHandler(object):
             print('message', count)
             count += 1
             try:
-                msg_json = msg.value.decode('utf-8')
+                msg_json = json.loads(msg.value.decode('utf-8'))
                 output_json = json.dumps({
                     "topic": msg.topic,
                     "timestamp": msg.timestamp,
                     "value": msg_json
                 })
-                socketio.emit('buyOffer', json.dumps({"topic": msg.topic,"timestamp": msg.timestamp,"value": msg.value.decode('utf-8')}), namespace='/')
+                self.dumps['buyOffer'].append(output_json)
+                socketio.emit('buyOffer', output_json, namespace='/')
             except Exception as e:
                 print('emit error', e)
                 break
@@ -49,23 +54,7 @@ kafka = KafkaHandler()
 
 @app.route("/log/sales")
 def getAll():
-    print('received request')
-    consumer = KafkaConsumer(consumer_timeout_ms = 1000, bootstrap_servers = kafka_endpoint + ':9092')
-
-    consumer.assign([TopicPartition('buyOffer', 0)])
-    consumer.seek_to_beginning()
-
-    result = []
-
-    for msg in consumer:
-        try:
-            msg2 = msg.value.decode('utf-8')
-            result.append({"topic": msg.topic,"timestamp": msg.timestamp,"value": msg2})
-        except:
-            pass
-
-    consumer.close()
-    return(json.dumps(result))
+    return(json.dumps(kafka.dumps['buyOffer']))
 
 @socketio.on('connect', namespace='/')
 def test_connect():
@@ -75,7 +64,7 @@ def test_connect():
 @socketio.on('buyOffer', namespace='/')
 def buy_offer_listener():
     print('buy_offer_listener')
-    emit('buyOffer', {})
+    emit('test', {})
 
 
 if __name__ == "__main__":
