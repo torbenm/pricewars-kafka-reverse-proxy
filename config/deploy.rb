@@ -56,6 +56,7 @@ namespace :deploy do
         execute "cd #{release_path}/ && sudo pip3 install gunicorn"
       end
     end
+  end
   task :restart_webserver do
     on roles :all do
       within release_path do
