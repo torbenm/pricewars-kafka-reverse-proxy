@@ -53,9 +53,19 @@ namespace :deploy do
       within release_path do
         execute "cd #{release_path}/ && sudo pip3 install -r requirements.txt"
         execute "cd #{release_path}/ && sudo pip3 install mod_wsgi"
+        execute "cd #{release_path}/ && sudo pip3 install gunicorn"
+      end
+    end
+  task :restart_webserver do
+    on roles :all do
+      within release_path do
+        execute "pkill -f gunicorn"
+        execute "ps -ef | grep gunicorn | grep -v grep | awk '{print $2}' | xargs kill -9"
+        execute "cd #{release_path}/ && gunicorn -b 0.0.0.0:8001 LoggerApp:app &"
       end
     end
   end
 
   after :deploy, "deploy:install_dependencies"
+  after :deploy, "deploy:restart_webserver"
 end
