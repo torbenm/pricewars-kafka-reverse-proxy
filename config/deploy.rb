@@ -62,7 +62,7 @@ namespace :deploy do
       within release_path do
         #execute "pkill -f gunicorn"
         execute "ps -ef | grep gunicorn | grep -v grep | awk '{print $2}' | xargs kill -9"
-        execute "cd #{release_path}/ && gunicorn -b 0.0.0.0:8001 LoggerApp:app >> /var/log/gunicorn.log &"
+        execute "cd #{release_path}/ && gunicorn --worker-class eventlet -w 1 -b 0.0.0.0:8001 LoggerApp:app >> /var/log/gunicorn.log &"
       end
     end
   end
