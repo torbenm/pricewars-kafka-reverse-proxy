@@ -21,9 +21,10 @@ class KafkaHandler(object):
         self.consumer = KafkaConsumer(bootstrap_servers = kafka_endpoint + ':9092')
         self.dumps = {}
 
-        topic = 'buyOffer'
-        self.dumps[topic] = []
-        self.consumer.assign([TopicPartition(topic, 0)])
+        topics = ['buyOffer', 'revenue']
+        for topic in topics:
+            self.dumps[topic] = []
+        self.consumer.assign([TopicPartition(topic, 0) for topic in topics])
         self.consumer.seek_to_beginning()
 
         self.thread = threading.Thread(target=self.run, args=())
@@ -42,8 +43,8 @@ class KafkaHandler(object):
                     "timestamp": msg.timestamp,
                     "value": msg_json
                 })
-                self.dumps['buyOffer'].append(output_json)
-                socketio.emit('buyOffer', output_json, namespace='/')
+                self.dumps[str(msg.topic)].append(output_json)
+                socketio.emit([str(msg.topic), output_json, namespace='/')
             except Exception as e:
                 print('emit error', e)
                 break
@@ -65,7 +66,6 @@ def test_connect():
 def buy_offer_listener():
     print('buy_offer_listener')
     emit('test', {})
-
 
 @app.route("/log/buyOffer")
 def buyOffer():
