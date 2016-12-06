@@ -44,7 +44,7 @@ class KafkaHandler(object):
                     "value": msg_json
                 })
                 self.dumps[str(msg.topic)].append(output_json)
-                socketio.emit([str(msg.topic), output_json, namespace='/')
+                socketio.emit(str(msg.topic), output_json, namespace='/')
             except Exception as e:
                 print('emit error', e)
                 break
