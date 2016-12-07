@@ -52,7 +52,6 @@ class KafkaHandler(object):
 
 kafka = KafkaHandler()
 
-
 @app.route("/log/sales")
 def getAll():
     return(json.dumps(kafka.dumps['buyOffer']))
@@ -69,7 +68,6 @@ def buy_offer_listener():
 
 @app.route("/log/buyOffer")
 def buyOffer():
-    kafka_endpoint = 'vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de'
     consumer = KafkaConsumer(consumer_timeout_ms = 3000, bootstrap_servers = kafka_endpoint + ':9092')
 
     consumer.assign([TopicPartition('buyOffer', 0)])
@@ -89,7 +87,6 @@ def buyOffer():
 
 @app.route("/log/salesPerMinutes")
 def salesPerMinutes():
-    kafka_endpoint = 'vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de'
     consumer = KafkaConsumer(consumer_timeout_ms = 3000, bootstrap_servers = kafka_endpoint + ':9092')
 
     consumer.assign([TopicPartition('SalesPerMinutes', 0)])
