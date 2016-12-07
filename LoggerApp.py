@@ -13,19 +13,40 @@ import time
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, logger=True, engineio_logger=True)
+#socketio = SocketIO(app)
 
 kafka_endpoint = 'vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de'
+
+'''
+kafka_producer.send(KafkaProducerRecord(
+"updateOffer", s"""{
+    "offer_id": $offer_id, 
+    "uid": ${offer.uid}, 
+    "product_id": ${offer.product_id}, 
+    "quality": ${offer.quality}, 
+    "merchant_id": ${offer.merchant_id}, 
+    "amount": ${offer.amount}, 
+    "price": ${offer.price}, 
+    "shipping_time_standard": ${offer.shipping_time.standard}, 
+    "shipping_time_prime": ${offer.shipping_time.prime}, 
+    "prime": ${offer.prime}, 
+    "signature": "${offer.signature}", 
+    "http_code": 200, 
+    "timestamp": "${new DateTime()}"
+}"""))
+
+'''
 
 class KafkaHandler(object):
     def __init__(self):
         self.consumer = KafkaConsumer(bootstrap_servers = kafka_endpoint + ':9092')
         self.dumps = {}
 
-        topics = ['buyOffer', 'revenue']
+        topics = ['buyOffer', 'revenue', 'updateOffer']
         for topic in topics:
             self.dumps[topic] = []
         self.consumer.assign([TopicPartition(topic, 0) for topic in topics])
-        self.consumer.seek_to_beginning()
+        #self.consumer.seek_to_beginning()
 
         self.thread = threading.Thread(target=self.run, args=())
         self.thread.daemon = True  # Demonize thread
@@ -34,20 +55,23 @@ class KafkaHandler(object):
     def run(self):
         count = 0
         for msg in self.consumer:
-            print('message', count)
             count += 1
             try:
                 msg_json = json.loads(msg.value.decode('utf-8'))
+                if 'http_code' in msg_json and msg_json['http_code'] != 200:
+                    continue
+
                 output_json = json.dumps({
                     "topic": msg.topic,
                     "timestamp": msg.timestamp,
                     "value": msg_json
                 })
                 self.dumps[str(msg.topic)].append(output_json)
+
                 socketio.emit(str(msg.topic), output_json, namespace='/')
             except Exception as e:
-                print('emit error', e)
-                break
+                print('error emit msg', e)
+
         self.consumer.close
 
 kafka = KafkaHandler()
@@ -56,15 +80,15 @@ kafka = KafkaHandler()
 def getAll():
     return(json.dumps(kafka.dumps['buyOffer']))
 
-@socketio.on('connect', namespace='/')
-def test_connect():
-    print('test_connect')
-    emit('test', {})
+# @socketio.on('connect', namespace='/')
+# def test_connect():
+#     print('test_connect')
+#     emit('test', {})
 
-@socketio.on('buyOffer', namespace='/')
-def buy_offer_listener():
-    print('buy_offer_listener')
-    emit('test', {})
+# @socketio.on('buyOffer', namespace='/')
+# def buy_offer_listener():
+#     print('buy_offer_listener')
+#     emit('test', {})
 
 @app.route("/log/buyOffer")
 def buyOffer():
