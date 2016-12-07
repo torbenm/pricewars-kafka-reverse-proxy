@@ -20,18 +20,18 @@ kafka_endpoint = 'vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de'
 '''
 kafka_producer.send(KafkaProducerRecord(
 "updateOffer", s"""{
-    "offer_id": $offer_id, 
-    "uid": ${offer.uid}, 
-    "product_id": ${offer.product_id}, 
-    "quality": ${offer.quality}, 
-    "merchant_id": ${offer.merchant_id}, 
-    "amount": ${offer.amount}, 
-    "price": ${offer.price}, 
-    "shipping_time_standard": ${offer.shipping_time.standard}, 
-    "shipping_time_prime": ${offer.shipping_time.prime}, 
-    "prime": ${offer.prime}, 
-    "signature": "${offer.signature}", 
-    "http_code": 200, 
+    "offer_id": $offer_id,
+    "uid": ${offer.uid},
+    "product_id": ${offer.product_id},
+    "quality": ${offer.quality},
+    "merchant_id": ${offer.merchant_id},
+    "amount": ${offer.amount},
+    "price": ${offer.price},
+    "shipping_time_standard": ${offer.shipping_time.standard},
+    "shipping_time_prime": ${offer.shipping_time.prime},
+    "prime": ${offer.prime},
+    "signature": "${offer.signature}",
+    "http_code": 200,
     "timestamp": "${new DateTime()}"
 }"""))
 
@@ -42,7 +42,13 @@ class KafkaHandler(object):
         self.consumer = KafkaConsumer(bootstrap_servers = kafka_endpoint + ':9092')
         self.dumps = {}
 
-        topics = ['buyOffer', 'revenue', 'updateOffer']
+        topics = ['buyOffer', 'revenue', 'updateOffer', 'updates', 'salesPerMinutes']
+
+        all_topics = ['revenue', 'updates','addProduct','getOffer','getOffers','SalesPerMinutes','deleteProduct','getConsumer',
+                      'salesPerMinutes','buyOffers','updateOffer','getMerchant','buyOffer','getMerchants','addOffer',
+                      'getProduct','deleteOffer','addConsumer','restockOffer','sales','deleteMerchant','producer','addMerchant',
+                      'test','deleteConsumer','getProducts','getConsumers']
+
         for topic in topics:
             self.dumps[topic] = []
         self.consumer.assign([TopicPartition(topic, 0) for topic in topics])
