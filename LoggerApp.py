@@ -42,12 +42,12 @@ class KafkaHandler(object):
         self.consumer = KafkaConsumer(bootstrap_servers = kafka_endpoint + ':9092')
         self.dumps = {}
 
-        topics = ['buyOffer', 'revenue', 'updateOffer', 'updates', 'salesPerMinutes']
+        topics = ['buyOffer', 'revenue', 'updateOffer', 'updates', 'salesPerMinutes', 'kumulativeAmountBasedMarketshare', 'kumulativeTurnoverBasedMarketshare']
 
         all_topics = ['revenue', 'updates','addProduct','getOffer','getOffers','SalesPerMinutes','deleteProduct','getConsumer',
                       'salesPerMinutes','buyOffers','updateOffer','getMerchant','buyOffer','getMerchants','addOffer',
                       'getProduct','deleteOffer','addConsumer','restockOffer','sales','deleteMerchant','producer','addMerchant',
-                      'test','deleteConsumer','getProducts','getConsumers']
+                      'test','deleteConsumer','getProducts','getConsumers', 'kumulativeAmountBasedMarketshare', 'kumulativeTurnoverBasedMarketshare']
 
         for topic in topics:
             self.dumps[topic] = []
