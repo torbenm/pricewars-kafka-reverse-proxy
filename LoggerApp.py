@@ -105,8 +105,7 @@ def on_connect():
         for msg_topic in kafka.dumps:
             messages = kafka.dumps[msg_topic][-100:]
             print('topic:', msg_topic, len(messages), 'messages')
-            for message in messages:
-                emit(msg_topic, message, namespace='/')
+            emit(msg_topic, messages, namespace='/')
 
 
 @app.route("/export/data")
