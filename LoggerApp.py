@@ -1,16 +1,13 @@
-from kafka import KafkaConsumer
-from kafka import TopicPartition
+import csv
+import json
 import threading
+import time
 
-from flask import Flask, render_template, request, send_from_directory
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 from flask_socketio import SocketIO
-from flask_socketio import send, emit
-
-import json
-import time
-import csv
-import time
+from kafka import KafkaConsumer
+from kafka import TopicPartition
 
 app = Flask(__name__, static_url_path='')
 CORS(app)
@@ -51,12 +48,12 @@ kafka_producer.send(KafkaProducerRecord(
 
 '''
 
+
 class KafkaHandler(object):
     def __init__(self):
         self.consumer = KafkaConsumer(bootstrap_servers = kafka_endpoint + ':9092')
         self.dumps = {}
         end_offset = {}
-
 
         for topic in topics:
             self.dumps[topic] = []
@@ -99,12 +96,13 @@ class KafkaHandler(object):
 
 kafka = KafkaHandler()
 
+
 @app.route("/export/data")
 def export_csv():
-    consumer2 = KafkaConsumer(consumer_timeout_ms = 3000, bootstrap_servers = kafka_endpoint + ':9092')
+    consumer2 = KafkaConsumer(consumer_timeout_ms=3000, bootstrap_servers=kafka_endpoint + ':9092')
 
-    topicPartitions = [TopicPartition(topic, 0) for topic in topics]
-    consumer2.assign(topicPartitions)
+    topic_partitions = [TopicPartition(topic, 0) for topic in topics]
+    consumer2.assign(topic_partitions)
     consumer2.seek_to_beginning()
 
     filename = int(time.time())
@@ -116,16 +114,12 @@ def export_csv():
             writer.writerow([msg.topic, msg.timestamp, msg2])
 
     consumer2.close()
-    return(json.dumps({"url":filepath}))
+    return json.dumps({"url":filepath})
 
-#@app.route('/dl/csv')
-#def send_csv():
-#    return send_from_directory('csv',"data/dump.csv")
 
-@app.route('/csv/<path:path>')
+@app.route('/data/<path:path>')
 def static_proxy(path):
-  # send_static_file will guess the correct MIME type
-  return app.send_static_file(path)
+    return send_from_directory('data', path)
 
 if __name__ == "__main__":
     #app.run(port=8001)
