@@ -97,9 +97,16 @@ class KafkaHandler(object):
 kafka = KafkaHandler()
 
 
-#@socketio.on('connect', namespace='/')
-#def on_connect():
-#    emit('my response', {'data': 'Connected'})
+@socketio.on('connect', namespace='/')
+def on_connect():
+    global kafka
+    print('new client connected, try to transmit some history .. ')
+    if kafka.dumps:
+        for msg_topic in kafka.dumps:
+            messages = kafka.dumps[msg_topic][-100:]
+            print('topic:', msg_topic, len(messages), 'messages')
+            for message in messages:
+                emit(msg_topic, message, namespace='/')
 
 
 @app.route("/export/data")
