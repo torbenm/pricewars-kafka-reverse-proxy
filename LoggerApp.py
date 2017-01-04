@@ -13,7 +13,6 @@ import time
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, logger=True, engineio_logger=True)
-#socketio = SocketIO(app)
 
 kafka_endpoint = 'vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de'
 
@@ -41,21 +40,31 @@ class KafkaHandler(object):
     def __init__(self):
         self.consumer = KafkaConsumer(bootstrap_servers = kafka_endpoint + ':9092')
         self.dumps = {}
+        end_offset = {}
 
-        topics = ['buyOffer', 'revenue', 'updateOffer', 'updates', 'salesPerMinutes', 'kumulativeAmountBasedMarketshare', 'kumulativeTurnoverBasedMarketshare', 'testpartition']
+        topics = ['buyOffer', 'revenue', 'updateOffer', 'updates', 'salesPerMinutes', 'kumulativeAmountBasedMarketshare', 'kumulativeTurnoverBasedMarketshare']
 
-        all_topics = ['deleteConsumer','getConsumers','getProducts','test','getMerchant','getMerchants','restockOffer','kumulativeRevenueBasedMarketshare',
-                      'kumulativeTurnoverBasedMarketshare','addConsumer','kumulativeAmountBasedMarketshare','sales','deleteOffer','marketshare','buyOffer',
-                      'addOffer','revenue','updates','__consumer_offsets','kumulativeTurnoverBasedMarketshareDaily','addProduct','kumulativeRevenueBasedMarketshareDaily',
-                      'getConsumer','getOffers','kumulativeAmountBasedMarketshareHourly','buyOffers','kumulativeRevenueBasedMarketshareHourly','deleteProduct',
-                      'getOffer','updateOffer','kumulativeTurnoverBasedMarketshareHourly','addMerchant','deleteMerchant','kumulativeAmountBasedMarketshareDaily',
-                      'producer','SalesPerMinutes','getProduct','salesPerMinutes', 'testpartition']
+        '''
+        The following topics exist in kafka_endpoint:
+
+          'deleteConsumer','getConsumers','getProducts','test','getMerchant','getMerchants','restockOffer','kumulativeRevenueBasedMarketshare',
+          'kumulativeTurnoverBasedMarketshare','addConsumer','kumulativeAmountBasedMarketshare','sales','deleteOffer','marketshare','buyOffer',
+          'addOffer','revenue','updates','__consumer_offsets','kumulativeTurnoverBasedMarketshareDaily','addProduct','kumulativeRevenueBasedMarketshareDaily',
+          'getConsumer','getOffers','kumulativeAmountBasedMarketshareHourly','buyOffers','kumulativeRevenueBasedMarketshareHourly','deleteProduct',
+          'getOffer','updateOffer','kumulativeTurnoverBasedMarketshareHourly','addMerchant','deleteMerchant','kumulativeAmountBasedMarketshareDaily',
+          'producer','SalesPerMinutes','getProduct','salesPerMinutes'
+        '''
 
         for topic in topics:
             self.dumps[topic] = []
-        self.consumer.assign([TopicPartition(topic, 0) for topic in topics])
-        #self.consumer.seek_to_beginning()
-        
+            current_partition = TopicPartition(topic,0)
+            self.consumer.assign([current_partition])
+            self.consumer.seek_to_end()
+            end_offset[topic] = self.consumer.position(current_partition)
+
+        topicPartitions = [TopicPartition(topic, end_offset[topic]-100) for topic in topics]
+        self.consumer.assign(topicPartitions)
+
         self.thread = threading.Thread(target=self.run, args=())
         self.thread.daemon = True  # Demonize thread
         self.thread.start()  # Start the execution
@@ -83,80 +92,6 @@ class KafkaHandler(object):
         self.consumer.close
 
 kafka = KafkaHandler()
-
-@app.route("/log/sales")
-def getAll():
-    return(json.dumps(kafka.dumps['buyOffer']))
-
-# @socketio.on('connect', namespace='/')
-# def test_connect():
-#     print('test_connect')
-#     emit('test', {})
-
-# @socketio.on('buyOffer', namespace='/')
-# def buy_offer_listener():
-#     print('buy_offer_listener')
-#     emit('test', {})
-
-@app.route("/log/buyOffer")
-def buyOffer():
-    consumer = KafkaConsumer(consumer_timeout_ms = 3000, bootstrap_servers = kafka_endpoint + ':9092')
-
-    consumer.assign([TopicPartition('buyOffer', 0)])
-    consumer.seek_to_beginning()
-
-    result = []
-
-    for msg in consumer:
-        try:
-            msg2 = json.loads(msg.value.decode('utf-8'))
-            result.append({"topic": msg.topic,"timestamp": msg.timestamp,"value": msg2})
-        except:
-            pass
-
-    consumer.close()
-    return(json.dumps(result))
-
-@app.route("/log/salesPerMinutes")
-def salesPerMinutes():
-    consumer = KafkaConsumer(consumer_timeout_ms = 3000, bootstrap_servers = kafka_endpoint + ':9092')
-
-    consumer.assign([TopicPartition('SalesPerMinutes', 0)])
-    consumer.seek_to_beginning()
-
-    result = []
-
-    for msg in consumer:
-        try:
-            msg2 = json.loads(msg.value.decode('utf-8'))
-            result.append({"topic": msg.topic,"timestamp": msg.timestamp,"value": msg2})
-        except:
-            pass
-
-    consumer.close()
-    return(json.dumps(result))
-    
-@app.route("/log/buyOfferHundred")
-def lastHundredBuyOffer():
-    consumer = KafkaConsumer(consumer_timeout_ms = 3000, bootstrap_servers = kafka_endpoint + ':9092')
-
-    consumer.assign([TopicPartition('buyOffer', 0)])
-    consumer.seek_to_end('buyOffer')
-    end_offset = consumer.position('buyOffer')
-    if(end_offset>100):
-        consumer.seek('buyOffer',end_offset-100)
-
-    result = []
-
-    for msg in consumer:
-        try:
-            msg2 = json.loads(msg.value.decode('utf-8'))
-            result.append({"topic": msg.topic,"timestamp": msg.timestamp,"value": msg2})
-        except:
-            pass
-
-    consumer.close()
-    return(json.dumps(result))
 
 if __name__ == "__main__":
     #app.run(port=8001)
