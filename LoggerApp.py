@@ -57,6 +57,7 @@ class KafkaHandler(object):
         self.dumps = {}
         end_offset = {}
 
+
         for topic in topics:
             self.dumps[topic] = []
             current_partition = TopicPartition(topic,0)
