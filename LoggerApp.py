@@ -42,14 +42,14 @@ class KafkaHandler(object):
         self.consumer = KafkaConsumer(bootstrap_servers = kafka_endpoint + ':9092')
         self.dumps = {}
 
-        topics = ['buyOffer', 'revenue', 'updateOffer', 'updates', 'salesPerMinutes', 'kumulativeAmountBasedMarketshare', 'kumulativeTurnoverBasedMarketshare', 'testpartition']
+        topics = ['buyOffer', 'revenue', 'updateOffer', 'updates', 'salesPerMinutes', 'kumulativeAmountBasedMarketshare', 'kumulativeTurnoverBasedMarketshare']
 
         all_topics = ['deleteConsumer','getConsumers','getProducts','test','getMerchant','getMerchants','restockOffer','kumulativeRevenueBasedMarketshare',
                       'kumulativeTurnoverBasedMarketshare','addConsumer','kumulativeAmountBasedMarketshare','sales','deleteOffer','marketshare','buyOffer',
                       'addOffer','revenue','updates','__consumer_offsets','kumulativeTurnoverBasedMarketshareDaily','addProduct','kumulativeRevenueBasedMarketshareDaily',
                       'getConsumer','getOffers','kumulativeAmountBasedMarketshareHourly','buyOffers','kumulativeRevenueBasedMarketshareHourly','deleteProduct',
                       'getOffer','updateOffer','kumulativeTurnoverBasedMarketshareHourly','addMerchant','deleteMerchant','kumulativeAmountBasedMarketshareDaily',
-                      'producer','SalesPerMinutes','getProduct','salesPerMinutes', 'testpartition']
+                      'producer','SalesPerMinutes','getProduct','salesPerMinutes']
 
         for topic in topics:
             self.dumps[topic] = []
