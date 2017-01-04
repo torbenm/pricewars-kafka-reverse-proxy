@@ -1,8 +1,8 @@
 # config valid only for current version of Capistrano
 # lock '3.4.0'
 
-set :application, "pricewars-kafka-rest"
-set :repo_url, "git@github.com:hpi-epic/pricewars-kafka-rest.git"
+set :application, "pricewars-kafka-reverse-proxy"
+set :repo_url, "git@github.com:hpi-epic/pricewars-kafka-reverse-proxy.git"
 set :scm, :git
 
 set :pty, true
