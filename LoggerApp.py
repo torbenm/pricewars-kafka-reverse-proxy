@@ -5,7 +5,7 @@ import time
 
 from flask import Flask, send_from_directory
 from flask_cors import CORS
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, emit
 from kafka import KafkaConsumer
 from kafka import TopicPartition
 
@@ -51,7 +51,7 @@ kafka_producer.send(KafkaProducerRecord(
 
 class KafkaHandler(object):
     def __init__(self):
-        self.consumer = KafkaConsumer(bootstrap_servers = kafka_endpoint + ':9092')
+        self.consumer = KafkaConsumer(bootstrap_servers=kafka_endpoint + ':9092')
         self.dumps = {}
         end_offset = {}
 
@@ -63,10 +63,10 @@ class KafkaHandler(object):
             offset = self.consumer.position(current_partition)
             end_offset[topic] = offset>100 and offset or 100
 
-        topicPartitions = [TopicPartition(topic, 0) for topic in topics]
-        self.consumer.assign(topicPartitions)
+        topic_partitions = [TopicPartition(topic, 0) for topic in topics]
+        self.consumer.assign(topic_partitions)
         for topic in topics:
-            self.consumer.seek(TopicPartition(topic,0),end_offset[topic]-100)
+            self.consumer.seek(TopicPartition(topic, 0), end_offset[topic]-100)
 
         self.thread = threading.Thread(target=self.run, args=())
         self.thread.daemon = True  # Demonize thread
@@ -97,6 +97,11 @@ class KafkaHandler(object):
 kafka = KafkaHandler()
 
 
+#@socketio.on('connect', namespace='/')
+#def on_connect():
+#    emit('my response', {'data': 'Connected'})
+
+
 @app.route("/export/data")
 def export_csv():
     consumer2 = KafkaConsumer(consumer_timeout_ms=3000, bootstrap_servers=kafka_endpoint + ':9092')
@@ -114,7 +119,7 @@ def export_csv():
             writer.writerow([msg.topic, msg.timestamp, msg2])
 
     consumer2.close()
-    return json.dumps({"url":filepath})
+    return json.dumps({"url": filepath})
 
 
 @app.route('/data/<path:path>')
