@@ -3,6 +3,8 @@ import json
 import threading
 import time
 
+import pandas as pd
+
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
@@ -126,6 +128,37 @@ def export_csv():
 
     consumer2.close()
     return json.dumps({"url": filepath})
+
+
+@app.route("/export/data/<topic:topic>")
+def export_csv_for_topic(topic):
+    response = {}
+
+    try:
+        if topic in topics:
+            consumer = KafkaConsumer(consumer_timeout_ms=3000, bootstrap_servers=kafka_endpoint + ':9092')
+            topic_partitions = [TopicPartition(topic, 0)]
+            consumer.assign(topic_partitions)
+            consumer.seek_to_beginning()
+
+            filename = topic + '_' + int(time.time())
+            filepath = 'data/'+str(filename)+'.csv'
+
+            df = pd.DataFrame
+
+            for msg in consumer:
+                msg_json = json.loads(msg.value.decode('utf-8'))
+                print(msg_json)
+                break
+
+            response = {'url': filepath}
+        else:
+            response = {'error': 'unknown topic'}
+    except Exception as e:
+        response = {'error': 'failed with: ' + e}
+
+    consumer2.close()
+    return json.dumps(response)
 
 
 @app.route('/data/<path:path>')
