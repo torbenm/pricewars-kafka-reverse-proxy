@@ -29,6 +29,10 @@ The following topics exist in kafka_endpoint:
 '''
 topics = ['buyOffer', 'revenue', 'updateOffer', 'updates', 'salesPerMinutes', 'kumulativeAmountBasedMarketshare', 'kumulativeTurnoverBasedMarketshare']
 
+@app.route("/topics")
+def get_topics():
+    return json.dumps(topics)
+
 
 '''
 kafka_producer.send(KafkaProducerRecord(
@@ -130,7 +134,7 @@ def export_csv():
     return json.dumps({"url": filepath})
 
 
-@app.route("/export/data/<topic:topic>")
+@app.route("/export/data/<path:topic>")
 def export_csv_for_topic(topic):
     response = {}
 
@@ -141,23 +145,23 @@ def export_csv_for_topic(topic):
             consumer.assign(topic_partitions)
             consumer.seek_to_beginning()
 
-            filename = topic + '_' + int(time.time())
-            filepath = 'data/'+str(filename)+'.csv'
+            filename = topic + '_' + str(int(time.time()))
+            filepath = 'data/'+ filename +'.csv'
 
-            df = pd.DataFrame
-
+            msgs = []
             for msg in consumer:
                 msg_json = json.loads(msg.value.decode('utf-8'))
-                print(msg_json)
-                break
+                msgs.append(msg_json)
 
+            df = pd.DataFrame(msgs)
+            df.to_csv(filepath, index=False)
             response = {'url': filepath}
         else:
             response = {'error': 'unknown topic'}
     except Exception as e:
-        response = {'error': 'failed with: ' + e}
+        response = {'error': 'failed with: ' + str(e)}
 
-    consumer2.close()
+    consumer.close()
     return json.dumps(response)
 
 
