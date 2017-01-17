@@ -87,12 +87,13 @@ class KafkaHandler(object):
                 if 'http_code' in msg_json and msg_json['http_code'] != 200:
                     continue
 
-                output_json = json.dumps({
+                output = {
                     "topic": msg.topic,
                     "timestamp": msg.timestamp,
                     "value": msg_json
-                })
-                self.dumps[str(msg.topic)].append(output_json)
+                }
+                output_json = json.dumps(output)
+                self.dumps[str(msg.topic)].append(output)
 
                 socketio.emit(str(msg.topic), output_json, namespace='/')
             except Exception as e:
@@ -119,7 +120,7 @@ def status():
     for topic in kafka.dumps:
         status_dict[topic] = {
             'messages': len(kafka.dumps[topic]),
-            'last_message': kafka.dumps[topic][-1]
+            'last_message': kafka.dumps[topic][-1] if kafka.dumps[topic] else ''
         }
     return json.dumps(status_dict)
 
