@@ -20,11 +20,11 @@ kafka_endpoint = 'vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de'
 '''
 The following topics exist in kafka_endpoint:
 
-  'deleteConsumer','getConsumers','getProducts','test','getMerchant','getMerchants','restockOffer','kumulativeRevenueBasedMarketshare',
-  'kumulativeTurnoverBasedMarketshare','addConsumer','kumulativeAmountBasedMarketshare','sales','deleteOffer','marketshare','buyOffer',
-  'addOffer','revenue','updates','__consumer_offsets','kumulativeTurnoverBasedMarketshareDaily','addProduct','kumulativeRevenueBasedMarketshareDaily',
-  'getConsumer','getOffers','kumulativeAmountBasedMarketshareHourly','buyOffers','kumulativeRevenueBasedMarketshareHourly','deleteProduct',
-  'getOffer','updateOffer','kumulativeTurnoverBasedMarketshareHourly','addMerchant','deleteMerchant','kumulativeAmountBasedMarketshareDaily',
+  'deleteConsumer','getConsumers','getProducts','test','getMerchant','getMerchants','restockOffer',
+  'addConsumer','sales','deleteOffer','marketshare','buyOffer',
+  'addOffer','revenue','updates','__consumer_offsets','addProduct',
+  'getConsumer','getOffers','buyOffers','deleteProduct',
+  'getOffer','updateOffer','addMerchant','deleteMerchant',
   'producer','SalesPerMinutes','getProduct','salesPerMinutes'
 '''
 topics = ['buyOffer', 'revenue', 'updateOffer', 'updates', 'salesPerMinutes', 'cumulativeAmountBasedMarketshare', 'cumulativeTurnoverBasedMarketshare']
@@ -113,6 +113,15 @@ def on_connect():
             print('topic:', msg_topic, len(messages), 'messages')
             emit(msg_topic, messages, namespace='/')
 
+@app.route("/status")
+def status():
+    status_dict = {}
+    for topic in kafka.dumps:
+        status_dict[topic] = {
+            'messages': len(kafka.dumps[topic]),
+            'last_message': kafka.dumps[topic][-1]['timestamp']
+        }
+    return json.dumps(status_dict)
 
 @app.route("/export/data")
 def export_csv():
