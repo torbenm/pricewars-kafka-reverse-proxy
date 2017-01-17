@@ -27,7 +27,7 @@ The following topics exist in kafka_endpoint:
   'getOffer','updateOffer','kumulativeTurnoverBasedMarketshareHourly','addMerchant','deleteMerchant','kumulativeAmountBasedMarketshareDaily',
   'producer','SalesPerMinutes','getProduct','salesPerMinutes'
 '''
-topics = ['buyOffer', 'revenue', 'updateOffer', 'updates', 'salesPerMinutes', 'kumulativeAmountBasedMarketshare', 'kumulativeTurnoverBasedMarketshare']
+topics = ['buyOffer', 'revenue', 'updateOffer', 'updates', 'salesPerMinutes', 'cumulativeAmountBasedMarketshare', 'cumulativeTurnoverBasedMarketshare']
 
 @app.route("/topics")
 def get_topics():
