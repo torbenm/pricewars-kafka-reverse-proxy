@@ -119,7 +119,7 @@ def status():
     for topic in kafka.dumps:
         status_dict[topic] = {
             'messages': len(kafka.dumps[topic]),
-            'last_message': kafka.dumps[topic][-1]['timestamp']
+            'last_message': kafka.dumps[topic][-1]
         }
     return json.dumps(status_dict)
 
