@@ -4,12 +4,13 @@ import threading
 import time
 
 import pandas as pd
-
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, request, Response
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 from kafka import KafkaConsumer
 from kafka import TopicPartition
+
+from DataGeneration import create_marketsituation_csv
 
 app = Flask(__name__, static_url_path='')
 CORS(app)
@@ -28,11 +29,6 @@ The following topics exist in kafka_endpoint:
   'producer','SalesPerMinutes','getProduct','salesPerMinutes'
 '''
 topics = ['buyOffer', 'revenue', 'updateOffer', 'updates', 'salesPerMinutes', 'cumulativeAmountBasedMarketshare', 'cumulativeTurnoverBasedMarketshare']
-
-@app.route("/topics")
-def get_topics():
-    return json.dumps(topics)
-
 
 '''
 kafka_producer.send(KafkaProducerRecord(
@@ -74,9 +70,9 @@ class KafkaHandler(object):
         for topic in topics:
             self.consumer.seek(TopicPartition(topic, 0), end_offset[topic]-100)
 
-        self.thread = threading.Thread(target=self.run, args=())
-        self.thread.daemon = True  # Demonize thread
-        self.thread.start()  # Start the execution
+        #self.thread = threading.Thread(target=self.run, args=())
+        #self.thread.daemon = True  # Demonize thread
+        #self.thread.start()  # Start the execution
 
     def run(self):
         count = 0
@@ -113,6 +109,20 @@ def on_connect():
             messages = kafka.dumps[msg_topic][-100:]
             print('topic:', msg_topic, len(messages), 'messages')
             emit(msg_topic, messages, namespace='/')
+
+def json_response(obj):
+    js = json.dumps(obj)
+    resp = Response(js, status=200, mimetype='application/json')
+    return resp
+
+@app.route("/testdata")
+def test_data():
+    response = create_marketsituation_csv()
+    return json_response(response)
+
+@app.route("/topics")
+def get_topics():
+    return json.dumps(topics)
 
 @app.route("/status")
 def status():
