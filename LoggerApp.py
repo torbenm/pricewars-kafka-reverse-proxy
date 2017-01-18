@@ -70,9 +70,9 @@ class KafkaHandler(object):
         for topic in topics:
             self.consumer.seek(TopicPartition(topic, 0), end_offset[topic]-100)
 
-        #self.thread = threading.Thread(target=self.run, args=())
-        #self.thread.daemon = True  # Demonize thread
-        #self.thread.start()  # Start the execution
+        self.thread = threading.Thread(target=self.run, args=())
+        self.thread.daemon = True  # Demonize thread
+        self.thread.start()  # Start the execution
 
     def run(self):
         count = 0
