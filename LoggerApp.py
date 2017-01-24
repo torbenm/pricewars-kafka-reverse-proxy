@@ -26,9 +26,10 @@ The following topics exist in kafka_endpoint:
   'addOffer','revenue','updates','__consumer_offsets','addProduct',
   'getConsumer','getOffers','buyOffers','deleteProduct',
   'getOffer','updateOffer','addMerchant','deleteMerchant',
-  'producer','SalesPerMinutes','getProduct','salesPerMinutes'
+  'producer','SalesPerMinutes','getProduct','salesPerMinutes',
+  'marketSituation'
 '''
-topics = ['buyOffer', 'revenue', 'updateOffer', 'updates', 'salesPerMinutes', 'cumulativeAmountBasedMarketshare', 'cumulativeTurnoverBasedMarketshare']
+topics = ['buyOffer', 'revenue', 'updateOffer', 'updates', 'salesPerMinutes', 'cumulativeAmountBasedMarketshare', 'cumulativeTurnoverBasedMarketshare', 'marketSituation']
 
 '''
 kafka_producer.send(KafkaProducerRecord(
