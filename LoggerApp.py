@@ -56,7 +56,7 @@ class KafkaHandler(object):
         self.consumer = KafkaConsumer(bootstrap_servers=kafka_endpoint + ':9092')
         self.dumps = {}
         end_offset = {}
-        be_cheapest({}, 0, 0,01)
+        be_cheapest({}, 0, 0.01)
         for topic in topics:
             self.dumps[topic] = []
             current_partition = TopicPartition(topic,0)
