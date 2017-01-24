@@ -60,9 +60,6 @@ namespace :deploy do
   task :restart_webserver do
     on roles :all do
       within release_path do
-        #execute "pkill -f gunicorn" # return 1 per default..
-        #execute "ps -ef | grep gunicorn | grep -v grep | awk '{print $2}' | sudo xargs kill -9"
-        #execute "cd #{release_path}/ && gunicorn --worker-class eventlet -w 1 -b 0.0.0.0:8001 --reload LoggerApp:app >> gunicorn.log &"
         execute "sudo service loggerapp restart"
       end
     end
