@@ -29,7 +29,9 @@ The following topics exist in kafka_endpoint:
   'producer','SalesPerMinutes','getProduct','salesPerMinutes',
   'marketSituation'
 '''
-topics = ['buyOffer', 'revenue', 'updateOffer', 'updates', 'salesPerMinutes', 'cumulativeAmountBasedMarketshare', 'cumulativeTurnoverBasedMarketshare', 'marketSituation']
+topics = ['buyOffer', 'revenue', 'updateOffer', 'updates', 'salesPerMinutes',
+          'cumulativeAmountBasedMarketshare', 'cumulativeTurnoverBasedMarketshare',
+          'marketSituation', 'revenuePerMinute', 'revenuePerHour']
 
 '''
 kafka_producer.send(KafkaProducerRecord(
