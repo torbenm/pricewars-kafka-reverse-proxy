@@ -110,7 +110,7 @@ def on_connect():
     global kafka
     if kafka.dumps:
         for msg_topic in kafka.dumps:
-            messages = kafka.dumps[msg_topic]
+            messages = list(kafka.dumps[msg_topic])
             emit(msg_topic, messages, namespace='/')
 
 def json_response(obj):
