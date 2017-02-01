@@ -2,6 +2,7 @@ import csv
 import json
 import threading
 import time
+import collections
 
 import pandas as pd
 from flask import Flask, send_from_directory, request, Response
@@ -62,7 +63,7 @@ class KafkaHandler(object):
         end_offset = {}
 
         for topic in topics:
-            self.dumps[topic] = []
+            self.dumps[topic] = collections.deque(maxlen=100)
             current_partition = TopicPartition(topic,0)
             self.consumer.assign([current_partition])
             self.consumer.seek_to_end()
@@ -109,7 +110,7 @@ def on_connect():
     global kafka
     if kafka.dumps:
         for msg_topic in kafka.dumps:
-            messages = kafka.dumps[msg_topic][-100:]
+            messages = kafka.dumps[msg_topic]
             emit(msg_topic, messages, namespace='/')
 
 def json_response(obj):
