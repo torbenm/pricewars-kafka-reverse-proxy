@@ -14,7 +14,8 @@ from DataGeneration import create_marketsituation_csv
 
 app = Flask(__name__, static_url_path='')
 CORS(app)
-socketio = SocketIO(app, logger=True, engineio_logger=True)
+#socketio = SocketIO(app, logger=True, engineio_logger=True)
+socketio = SocketIO(app)
 
 kafka_endpoint = 'vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de'
 
@@ -106,11 +107,9 @@ kafka = KafkaHandler()
 @socketio.on('connect', namespace='/')
 def on_connect():
     global kafka
-    print('new client connected, try to transmit some history .. ')
     if kafka.dumps:
         for msg_topic in kafka.dumps:
             messages = kafka.dumps[msg_topic][-100:]
-            print('topic:', msg_topic, len(messages), 'messages')
             emit(msg_topic, messages, namespace='/')
 
 def json_response(obj):
