@@ -180,11 +180,14 @@ def market_situation_shaper(list_of_msgs):
             uid
     """
     # snapshot timestamp needs to be injected into the offer object
+    # also the triggering merchant
     expanded_offers = []
     for situation in list_of_msgs:
         for key in situation['offers']:
             offer = situation['offers'][key]
             offer['timestamp'] = situation['timestamp']
+            if 'merchant_id' in situation:
+                offer['triggering_merchant_id'] = situation['merchant_id']
             expanded_offers.append(offer)
     return pd.DataFrame(expanded_offers)
 
