@@ -1,11 +1,11 @@
+import collections
 import csv
 import json
 import threading
 import time
-import collections
 
 import pandas as pd
-from flask import Flask, send_from_directory, request, Response
+from flask import Flask, send_from_directory, Response
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 from kafka import KafkaConsumer
@@ -15,7 +15,7 @@ from DataGeneration import create_marketsituation_csv
 
 app = Flask(__name__, static_url_path='')
 CORS(app)
-#socketio = SocketIO(app, logger=True, engineio_logger=True)
+# socketio = SocketIO(app, logger=True, engineio_logger=True)
 socketio = SocketIO(app)
 
 kafka_endpoint = 'vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de'
@@ -64,16 +64,16 @@ class KafkaHandler(object):
 
         for topic in topics:
             self.dumps[topic] = collections.deque(maxlen=100)
-            current_partition = TopicPartition(topic,0)
+            current_partition = TopicPartition(topic, 0)
             self.consumer.assign([current_partition])
             self.consumer.seek_to_end()
             offset = self.consumer.position(current_partition)
-            end_offset[topic] = offset>100 and offset or 100
+            end_offset[topic] = offset > 100 and offset or 100
 
         topic_partitions = [TopicPartition(topic, 0) for topic in topics]
         self.consumer.assign(topic_partitions)
         for topic in topics:
-            self.consumer.seek(TopicPartition(topic, 0), end_offset[topic]-100)
+            self.consumer.seek(TopicPartition(topic, 0), end_offset[topic] - 100)
 
         self.thread = threading.Thread(target=self.run, args=())
         self.thread.daemon = True  # Demonize thread
@@ -100,7 +100,8 @@ class KafkaHandler(object):
             except Exception as e:
                 print('error emit msg', e)
 
-        self.consumer.close
+        self.consumer.close()
+
 
 kafka = KafkaHandler()
 
@@ -113,19 +114,23 @@ def on_connect():
             messages = list(kafka.dumps[msg_topic])
             emit(msg_topic, messages, namespace='/')
 
+
 def json_response(obj):
     js = json.dumps(obj)
     resp = Response(js, status=200, mimetype='application/json')
     return resp
+
 
 @app.route("/testdata")
 def test_data():
     response = create_marketsituation_csv()
     return json_response(response)
 
+
 @app.route("/topics")
 def get_topics():
     return json.dumps(topics)
+
 
 @app.route("/status")
 def status():
@@ -137,6 +142,7 @@ def status():
         }
     return json.dumps(status_dict)
 
+
 @app.route("/export/data")
 def export_csv():
     consumer2 = KafkaConsumer(consumer_timeout_ms=3000, bootstrap_servers=kafka_endpoint + ':9092')
@@ -146,7 +152,7 @@ def export_csv():
     consumer2.seek_to_beginning()
 
     filename = int(time.time())
-    filepath = 'data/'+str(filename)+'.csv'
+    filepath = 'data/' + str(filename) + '.csv'
     with open(filepath, 'wt', newline='') as csv_file:
         writer = csv.writer(csv_file)
         for msg in consumer2:
@@ -157,9 +163,37 @@ def export_csv():
     return json.dumps({"url": filepath})
 
 
+def market_situation_shaper(list_of_msgs):
+    """
+        Returns pd.DataFrame Table with columns:
+            timestamp
+            merchant_id
+            product_id
+
+            quality
+            price
+            prime
+            shipping_time_prime
+            shipping_time_standard
+            amount
+            offer_id
+            uid
+    """
+    # snapshot timestamp needs to be injected into the offer object
+    expanded_offers = []
+    for situation in list_of_msgs:
+        for key in situation['offers']:
+            offer = situation['offers'][key]
+            offer['timestamp'] = situation['timestamp']
+            expanded_offers.append(offer)
+    return pd.DataFrame(expanded_offers)
+
+
 @app.route("/export/data/<path:topic>")
 def export_csv_for_topic(topic):
-    response = {}
+    shaper = {
+        'marketSituation': market_situation_shaper
+    }
 
     try:
         if topic in topics:
@@ -169,14 +203,18 @@ def export_csv_for_topic(topic):
             consumer.seek_to_beginning()
 
             filename = topic + '_' + str(int(time.time()))
-            filepath = 'data/'+ filename +'.csv'
+            filepath = 'data/' + filename + '.csv'
 
             msgs = []
             for msg in consumer:
-                msg_json = json.loads(msg.value.decode('utf-8'))
-                msgs.append(msg_json)
+                try:
+                    msg_json = json.loads(msg.value.decode('utf-8'))
+                    msgs.append(msg_json)
+                except ValueError as e:
+                    print('ValueError', e, 'in message:\n', msg.value)
+            consumer.close()
 
-            df = pd.DataFrame(msgs)
+            df = shaper[topic](msgs) if topic in shaper else pd.DataFrame(msgs)
             df.to_csv(filepath, index=False)
             response = {'url': filepath}
         else:
@@ -184,7 +222,6 @@ def export_csv_for_topic(topic):
     except Exception as e:
         response = {'error': 'failed with: ' + str(e)}
 
-    consumer.close()
     return json.dumps(response)
 
 
@@ -192,6 +229,7 @@ def export_csv_for_topic(topic):
 def static_proxy(path):
     return send_from_directory('data', path)
 
+
 if __name__ == "__main__":
-    #app.run(port=8001)
+    # app.run(port=8001)
     socketio.run(app, port=8001)
