@@ -236,4 +236,4 @@ def static_proxy(path):
 
 if __name__ == "__main__":
     # app.run(port=8001)
-    socketio.run(app, port=8001)
+    socketio.run(app, host='0.0.0.0', port=8001)
