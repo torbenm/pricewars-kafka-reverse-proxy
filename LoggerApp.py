@@ -3,6 +3,7 @@ import csv
 import json
 import threading
 import time
+import os
 
 import pandas as pd
 from flask import Flask, send_from_directory, Response
@@ -18,7 +19,7 @@ CORS(app)
 # socketio = SocketIO(app, logger=True, engineio_logger=True)
 socketio = SocketIO(app)
 
-kafka_endpoint = 'vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de'
+kafka_endpoint = os.getenv('KAFKA_URL', 'vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de:9092')
 
 '''
 The following topics exist in kafka_endpoint:
@@ -58,7 +59,7 @@ kafka_producer.send(KafkaProducerRecord(
 
 class KafkaHandler(object):
     def __init__(self):
-        self.consumer = KafkaConsumer(bootstrap_servers=kafka_endpoint + ':9092')
+        self.consumer = KafkaConsumer(bootstrap_servers=kafka_endpoint)
         self.dumps = {}
         end_offset = {}
 
@@ -145,7 +146,7 @@ def status():
 
 @app.route("/export/data")
 def export_csv():
-    consumer2 = KafkaConsumer(consumer_timeout_ms=3000, bootstrap_servers=kafka_endpoint + ':9092')
+    consumer2 = KafkaConsumer(consumer_timeout_ms=3000, bootstrap_servers=kafka_endpoint)
 
     topic_partitions = [TopicPartition(topic, 0) for topic in topics]
     consumer2.assign(topic_partitions)
@@ -200,7 +201,7 @@ def export_csv_for_topic(topic):
 
     try:
         if topic in topics:
-            consumer = KafkaConsumer(consumer_timeout_ms=3000, bootstrap_servers=kafka_endpoint + ':9092')
+            consumer = KafkaConsumer(consumer_timeout_ms=3000, bootstrap_servers=kafka_endpoint)
             topic_partitions = [TopicPartition(topic, 0)]
             consumer.assign(topic_partitions)
             consumer.seek_to_beginning()
