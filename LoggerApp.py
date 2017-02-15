@@ -4,9 +4,11 @@ import json
 import threading
 import time
 import os
+import hashlib
+import base64
 
 import pandas as pd
-from flask import Flask, send_from_directory, Response
+from flask import Flask, send_from_directory, Response, request
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 from kafka import KafkaConsumer
@@ -193,11 +195,18 @@ def market_situation_shaper(list_of_msgs):
     return pd.DataFrame(expanded_offers)
 
 
+def calculate_id(token):
+    return base64.b64encode(hashlib.sha256(token.encode('utf-8')).digest()).decode('utf-8')
+
 @app.route("/export/data/<path:topic>")
 def export_csv_for_topic(topic):
     shaper = {
         'marketSituation': market_situation_shaper
     }
+
+    auth_header = request.headers['Authorization'] if 'Authorization' in request.headers else None
+    _auth_type, merchant_token = auth_header.split(' ') if auth_header else (None, None)
+    merchant_id = calculate_id(merchant_token) if merchant_token else None
 
     try:
         if topic in topics:
@@ -213,7 +222,9 @@ def export_csv_for_topic(topic):
             for msg in consumer:
                 try:
                     msg_json = json.loads(msg.value.decode('utf-8'))
-                    msgs.append(msg_json)
+                    # filtering optional
+                    if not merchant_id or msg_json['merchant_id'] == merchant_id:
+                        msgs.append(msg_json)
                 except ValueError as e:
                     print('ValueError', e, 'in message:\n', msg.value)
             consumer.close()
