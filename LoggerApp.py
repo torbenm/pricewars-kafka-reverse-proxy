@@ -209,7 +209,7 @@ def export_csv_for_topic(topic):
     merchant_id = calculate_id(merchant_token) if merchant_token else None
 
 
-    maximum_msgs = 10**6
+    maximum_msgs = 10**5
 
     try:
         if topic in topics:
