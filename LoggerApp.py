@@ -208,18 +208,30 @@ def export_csv_for_topic(topic):
     _auth_type, merchant_token = auth_header.split(' ') if auth_header else (None, None)
     merchant_id = calculate_id(merchant_token) if merchant_token else None
 
+
+    maximum_msgs = 10**6
+
     try:
         if topic in topics:
-            consumer = KafkaConsumer(consumer_timeout_ms=3000, bootstrap_servers=kafka_endpoint)
-            topic_partitions = [TopicPartition(topic, 0)]
-            consumer.assign(topic_partitions)
+            consumer = KafkaConsumer(consumer_timeout_ms=750, bootstrap_servers=kafka_endpoint)
+            topic_partition = TopicPartition(topic, 0)
+            consumer.assign([topic_partition])
+            consumer.seek_to_end()
+            end_offset = consumer.position(topic_partition)
             consumer.seek_to_beginning()
 
             filename = topic + '_' + str(int(time.time()))
             filepath = 'data/' + filename + '.csv'
 
             msgs = []
+            offset = 0
             for msg in consumer:
+                '''
+                Don't handle steadily incoming new messages
+                '''
+                if offset >= end_offset or len(msgs) >= maximum_msgs:
+                    break
+                offset += 1
                 try:
                     msg_json = json.loads(msg.value.decode('utf-8'))
                     # filtering optional
