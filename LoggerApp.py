@@ -254,7 +254,7 @@ def export_csv_for_topic(topic):
 
 @app.route('/data/<path:path>')
 def static_proxy(path):
-    return send_from_directory('data', path)
+    return send_from_directory('data', path, as_attachment=True)
 
 
 if __name__ == "__main__":
