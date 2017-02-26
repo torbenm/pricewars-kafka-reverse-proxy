@@ -208,34 +208,38 @@ def export_csv_for_topic(topic):
     _auth_type, merchant_token = auth_header.split(' ') if auth_header else (None, None)
     merchant_id = calculate_id(merchant_token) if merchant_token else None
 
-
-    maximum_msgs = 10**5
+    max_messages = 10**5
 
     try:
         if topic in topics:
-            consumer = KafkaConsumer(consumer_timeout_ms=750, bootstrap_servers=kafka_endpoint)
+            consumer = KafkaConsumer(consumer_timeout_ms=1000, bootstrap_servers=kafka_endpoint)
             topic_partition = TopicPartition(topic, 0)
             consumer.assign([topic_partition])
+
+            consumer.seek_to_beginning()
+            start_offset = consumer.position(topic_partition)
+
             consumer.seek_to_end()
             end_offset = consumer.position(topic_partition)
-            consumer.seek_to_beginning()
 
             filename = topic + '_' + str(int(time.time()))
             filepath = 'data/' + filename + '.csv'
 
             msgs = []
-            offset = 0
+            offset = max(start_offset, end_offset - max_messages)
+            consumer.seek(topic_partition, offset)
             for msg in consumer:
                 '''
                 Don't handle steadily incoming new messages
+                only iterate to last messages when requested
                 '''
-                if offset >= end_offset or len(msgs) >= maximum_msgs:
+                if offset >= end_offset:
                     break
                 offset += 1
                 try:
                     msg_json = json.loads(msg.value.decode('utf-8'))
                     # filtering optional
-                    if not merchant_id or msg_json['merchant_id'] == merchant_id:
+                    if 'merchant_id' not in msg_json or msg_json['merchant_id'] == merchant_id:
                         msgs.append(msg_json)
                 except ValueError as e:
                     print('ValueError', e, 'in message:\n', msg.value)
