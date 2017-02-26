@@ -226,6 +226,11 @@ def export_csv_for_topic(topic):
             filepath = 'data/' + filename + '.csv'
 
             msgs = []
+            '''
+            Assumption: message offsets are continuous.
+            Start and end can be anywhere, end - start needs to match the amount of messages.
+            TODO: when deletion of some individual messages is possible and used, refactor!
+            '''
             offset = max(start_offset, end_offset - max_messages)
             consumer.seek(topic_partition, offset)
             for msg in consumer:
