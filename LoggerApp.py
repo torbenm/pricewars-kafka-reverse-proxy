@@ -243,7 +243,7 @@ def export_csv_for_topic(topic):
                 offset += 1
                 try:
                     msg_json = json.loads(msg.value.decode('utf-8'))
-                    # filtering optional
+                    # filtering on messages that can be filtered on merchant_id
                     if 'merchant_id' not in msg_json or msg_json['merchant_id'] == merchant_id:
                         msgs.append(msg_json)
                 except ValueError as e:
