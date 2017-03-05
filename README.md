@@ -16,11 +16,28 @@ We are using the [Github flow](https://guides.github.com/introduction/flow/) for
 | [Kafka RESTful API](https://github.com/hpi-epic/pricewars-kafka-rest) | master  	|  [vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de](http://vm-mpws2016hp1-05.eaalab.hpi.uni-potsdam.de) 	|  [ ![Codeship Status for hpi-epic/pricewars-kafka-rest](https://app.codeship.com/projects/f59aa150-92f0-0134-8718-4a1d78af514c/status?branch=master)](https://app.codeship.com/projects/186252) | Stable |
 
 
-## API calls
+## General
 
-### Generating CSV filter for all topics
+The Kafka reverse proxy is the connection between the logged Kafka data and all the consumer. These include
 
-```HTTP GET export/data/```
+1. the Management UI (Socket IO)
+2. Merchants (CSV, Content access control)
+
+## Interfaces
+
+### Socket IO
+
+Forward kafka log messages to a real-time front end.
+
+### filtered data view as CSV
+
+![](docs/rest_topic.png)
+
+#### Request data export
+
+```
+HTTP GET export/data/
+```
 
 generates a CSV file and returns the path as json
 
@@ -28,6 +45,6 @@ generates a CSV file and returns the path as json
 {"url": "data/dump.csv"}
 ```
 
-### Receiving CSV file
+#### Receiving CSV file
 
 ```HTTP GET data/dump.csv```
