@@ -1,8 +1,8 @@
-# Kafka Proxy
+# Kafka Reverse Proxy
 
-This repository contains the Kafka Proxy which acts as an interfacing components between our Kafka streams and the components that need access to it. These components are:
+This repository contains the Kafka Reverse Proxy which acts as an interfacing components between our Kafka streams and the components that need access to it. These components are:
 
-* Flink: Flink reads from and writes to Kafka topics to do aggregation and calculate statistics 
+* Flink: Flink reads from and writes to Kafka topics to do aggregation and calculate statistics
 * Management UI: The management UI needs to read from the live sales-data from the marketplace to display realtime pricing interaction between merchants. It also needs access to the aggregated statistics from Flink to visualize the performance of the merchants.
 * Merchants: Data-driven merchants have to be able to retrieve past market situations written to Kafka to do their learning. However, they should only be allowed to access the market situation data that they would have access to on a real system as well, ie the offers that were on the marketplace at a certain time and only their own sales data.
 
@@ -21,17 +21,17 @@ The meta repository containing general information can be found [here](https://g
 
 ## Requirements
 
-The kafka proxy is written in Python. Ensure to have [Python](https://www.python.org/) and pip installed and set up on your computer.
+The kafka reverse proxy is written in Python. Ensure to have [Python](https://www.python.org/) and pip installed and set up on your computer.
 
 ## Setup
 
-After cloning the repository, install the necessary dependencies with `pip install -r requirements.txt` (Linux, MacOS) resp. `python -m pip install -r requirements.txt` (Windows). 
+After cloning the repository, install the necessary dependencies with `pip install -r requirements.txt` (Linux, MacOS) resp. `python -m pip install -r requirements.txt` (Windows).
 
 Then start the kafka proxy by running `python LoggerApp.py`. The LoggerApp will run on _ http://localhost:8001 _.
 
 ## Configuration
 
-The kafka proxy only needs the URL of the kafka endpoints. This URL is currently hardcoded in the `LoggerApp.py` in line 24.
+The kafka reverse proxy only needs the URL of the kafka endpoints. This URL is currently hardcoded in the `LoggerApp.py` in line 24.
 
 ## Concept
 
@@ -44,13 +44,13 @@ The Kafka reverse proxy is the connection between the logged Kafka data and all 
 
 ### Socket IO
 
-Socket.io is used to forward Kafka log messages to our real-time front end. All topics that are forwarded in realtime (including the topics that contain the aggregations and statistics from Flink) can be found line 37++ of the `LoggerApp.py`. To add, delete or update topics, simply change the `topics`-array. 
+Socket.io is used to forward Kafka log messages to our real-time front end. All topics that are forwarded in realtime (including the topics that contain the aggregations and statistics from Flink) can be found line 37++ of the `LoggerApp.py`. To add, delete or update topics, simply change the `topics`-array.
 
 Furthermore, we use Socket.io to forward historic data to the front end. This allows the frontend to not start with empty graphs when the user enters a site, but to give the user an idea of the past data. This historic data is sent out to any client whenever it connects to our kafka reverse proxy. Currently, we consider the last 100 messages of each topic as historic data, ie a client that connects will receive for each topic the last 100 messages in a bulk-message via socket.io.
 
 ### Filtered data view as CSV
 
-For merchants to view past market situations and use them for training a model, the kafka reverse proxy offers the export of this data as a csv-file: 
+For merchants to view past market situations and use them for training a model, the kafka reverse proxy offers the export of this data as a csv-file:
 
 ![](docs/rest_topic.png)
 
