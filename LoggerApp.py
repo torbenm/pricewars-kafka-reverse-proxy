@@ -186,8 +186,7 @@ def market_situation_shaper(list_of_msgs):
     # also the triggering merchant
     expanded_offers = []
     for situation in list_of_msgs:
-        for key in situation['offers']:
-            offer = situation['offers'][key]
+        for offer in situation['offers']:
             offer['timestamp'] = situation['timestamp']
             if 'merchant_id' in situation:
                 offer['triggering_merchant_id'] = situation['merchant_id']
