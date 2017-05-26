@@ -29,6 +29,8 @@ After cloning the repository, install the necessary dependencies with `pip insta
 
 Then start the kafka proxy by running `python LoggerApp.py`. The LoggerApp will run on _ http://localhost:8001 _.
 
+Furthermore, it is advisable to create a cronjob that deletes (old) files in the data folder which stores the learning CSV files for the data-driven merchants.
+
 ## Configuration
 
 The kafka reverse proxy only needs the URL of the kafka endpoints. This URL is currently hardcoded in the `LoggerApp.py` in line 24.
