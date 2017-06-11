@@ -155,6 +155,8 @@ if [[ $CLI != "" ]]; then
         echoerr "$cmdname: strict mode, refusing to execute subprocess"
         exit $RESULT
     fi
+    echo "Kafka service is reachable. Now waiting 3s for creation of required topics before proxy is booted."
+    sleep 3
     exec $CLI
 else
     exit $RESULT
