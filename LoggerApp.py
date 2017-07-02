@@ -6,6 +6,7 @@ import time
 import os
 import hashlib
 import base64
+import logging
 
 import pandas as pd
 from flask import Flask, send_from_directory, Response, request
@@ -61,6 +62,7 @@ kafka_producer.send(KafkaProducerRecord(
 
 class KafkaHandler(object):
     def __init__(self):
+        logging.info('Going to initialize KafkaHandler for kafka at endpont %s', kafka_endpoint)
         self.consumer = KafkaConsumer(bootstrap_servers=kafka_endpoint)
         self.dumps = {}
         end_offset = {}
@@ -84,8 +86,10 @@ class KafkaHandler(object):
 
     def run(self):
         count = 0
+        logging.info('Starting KafkaConsumer Thread')
         for msg in self.consumer:
             count += 1
+            logging.info('Processing KafkaMessage #%d', count)
             try:
                 msg_json = json.loads(msg.value.decode('utf-8'))
                 if 'http_code' in msg_json and msg_json['http_code'] != 200:
@@ -102,7 +106,7 @@ class KafkaHandler(object):
                 socketio.emit(str(msg.topic), output_json, namespace='/')
             except Exception as e:
                 print('error emit msg', e)
-
+        logging.info('Closing KafkaConsumer Thread')
         self.consumer.close()
 
 
@@ -112,10 +116,12 @@ kafka = KafkaHandler()
 @socketio.on('connect', namespace='/')
 def on_connect():
     global kafka
+    logging.info('Received new connection request to socketio. Going to iterate over kafka dumps')
     if kafka.dumps:
         for msg_topic in kafka.dumps:
             messages = list(kafka.dumps[msg_topic])
             emit(msg_topic, messages, namespace='/')
+    logging.info('Finished setting up connection')
 
 
 def json_response(obj):
@@ -126,28 +132,33 @@ def json_response(obj):
 
 @app.route("/testdata")
 def test_data():
+    logging.info('Received request to get testdata')
     response = create_marketsituation_csv()
     return json_response(response)
 
 
 @app.route("/topics")
 def get_topics():
+    logging.info('Received request to get topics')
     return json.dumps(topics)
 
 
 @app.route("/status")
 def status():
     status_dict = {}
+    logging.info('Received request to get status')
     for topic in kafka.dumps:
         status_dict[topic] = {
             'messages': len(kafka.dumps[topic]),
             'last_message': kafka.dumps[topic][-1] if kafka.dumps[topic] else ''
         }
+    logging.info('Finished aggregating status')
     return json.dumps(status_dict)
 
 
 @app.route("/export/data")
 def export_csv():
+    logging.info('Received request to export data. Starting KafkaConsumer.')
     consumer2 = KafkaConsumer(consumer_timeout_ms=3000, bootstrap_servers=kafka_endpoint)
 
     topic_partitions = [TopicPartition(topic, 0) for topic in topics]
@@ -156,6 +167,7 @@ def export_csv():
 
     filename = int(time.time())
     filepath = 'data/' + str(filename) + '.csv'
+    logging.info('Export-Data: Writing to %s', filepath)
     with open(filepath, 'wt', newline='') as csv_file:
         writer = csv.writer(csv_file)
         for msg in consumer2:
@@ -163,6 +175,7 @@ def export_csv():
             writer.writerow([msg.topic, msg.timestamp, msg2])
 
     consumer2.close()
+    logging.info('Finished exporting data')
     return json.dumps({"url": filepath})
 
 
@@ -206,6 +219,7 @@ def export_csv_for_topic(topic):
     auth_header = request.headers['Authorization'] if 'Authorization' in request.headers else None
     _auth_type, merchant_token = auth_header.split(' ') if auth_header else (None, None)
     merchant_id = calculate_id(merchant_token) if merchant_token else None
+    logging.info('Received request to export topic %s by merchant %s', topic, merchant_token)
 
     max_messages = 10**5
 
@@ -256,15 +270,20 @@ def export_csv_for_topic(topic):
             response = {'error': 'unknown topic'}
     except Exception as e:
         response = {'error': 'failed with: ' + str(e)}
-
+        logging.error('Failed exporting topics %s: %s', topics, e)
+    logging.info('Finished exporting topic %s', topic)
     return json.dumps(response)
 
 
 @app.route('/data/<path:path>')
 def static_proxy(path):
+    logging.info('Received static proxy request to %s', path)
     return send_from_directory('data', path, as_attachment=True)
 
 
 if __name__ == "__main__":
-    # app.run(port=8001)
+    logging.basicConfig(format='%(asctime)-15s %(message)s', level=logging.INFO)
+    logging.info('Starting socketio app on host 0.0.0.0 and port 8001')
+    logging.info('Going to use kafka endpoint %s', kafka_endpoint)
+    logging.info('Available topics: %s', topics)
     socketio.run(app, host='0.0.0.0', port=8001)
